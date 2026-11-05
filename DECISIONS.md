@@ -17,6 +17,7 @@ Keep entries short. Proposed items are not approvals.
 | D011 | Required | Enforce default 6-hop task cap, transitions and duplicate protection atomically in the application database. Switch delivery receipts are not task completion. |
 | D012 | Open | Choose/verify the deployed Core image or source-build pin. Core, Console and controller release numbers are separate. Never float on latest. |
 | D013 | Open | Resolve the commercial deployment/licensing model against the upstream modified Commons Clause before committing to a paid hosted offering. |
+| D014 | Accepted | Maintain all project work on main. Consolidate the merged discovery branch and create additional branches only when explicitly requested. |
 
 No Google scopes have been requested or granted in Phase 0. The scope decisions remain for Phase 3: gmail.readonly for read-only inquiry access, calendar.events for campaign deadlines, and an explicit choice between Drive file selection/drive.file and the broader access needed for arbitrary brief search. Do not claim drive.file can read/search every existing Drive brief.
 
