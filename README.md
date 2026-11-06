@@ -8,6 +8,8 @@ Creavate is being built to coordinate a creator's brand-deal workflow across Gma
 
 > **Development status:** Phase 0 — Switch discovery is in progress. This repository contains sourced integration research, a disposable protocol probe, setup tooling and the dashboard design reference. The live Switch/Slack gate has not passed. The full application, Google integrations and dashboard are planned.
 
+**Selected direction:** Slack for chat and three OpenCode agents, each with its own Switch identity. Credentials/live setup is user-deferred. OpenCode/Core version compatibility and per-role tool restrictions still need a real-service gate; see [runtime findings](SWITCH_INTEGRATION.md#14-opencode-and-claude-code-runtime-setup).
+
 ## The workflow
 
 The first release is designed around one complete sponsorship workflow:
@@ -109,7 +111,7 @@ These paths are ignored by Git. Never commit credentials or raw room/email evide
 | Backend | Node.js, TypeScript and Express |
 | Database and authentication | Supabase PostgreSQL, Supabase Auth and migrations in the repository |
 | Agent communication | Switch behind one application adapter |
-| AI | Provider-agnostic tool-calling wrapper, defaulting to Anthropic with the model selected in configuration |
+| Agent runtime | OpenCode sessions through the documented Switch host; provider/model in configuration; live validation pending |
 | Creator tools | Gmail API, Google Drive API, Google Calendar API and Slack through Switch |
 
 The planned npm-workspace layout is:
@@ -121,8 +123,8 @@ apps/
 packages/
   shared/                Types and Zod schemas
   switch-adapter/        Switch protocol boundary
-  agents/                Brand Agent, Talent Manager and Campaign Agent
-  tools/                 Gmail, Drive, Calendar and approval guards
+  agents/                Instructions/config for three OpenCode identities
+  google-mcp/            Role-scoped Google tools and approval guards
 supabase/
   migrations/            Application schema and access policies
 ```
@@ -131,7 +133,7 @@ These workspaces will be created in the later phases. The current executable cod
 
 ### Product requirements
 
-- Every write tool must verify an approved approval ID and the exact authorized action in the database.
+- Every write tool must verify an approval from the creator's authenticated identity, mapped from the chat user ID, and the exact deal/action in the database. Agents and other room members cannot approve.
 - Email and attachment content is untrusted data and cannot alter instructions, tools, identities or permissions.
 - Agent handoffs go through Switch and must respect authenticated identities and a persisted hop cap.
 - Tool calls, workflow transitions and activity must be recorded. Reported results must come from actual returns.
@@ -145,12 +147,12 @@ These are implementation requirements for v1; the Phase 0 probe does not establi
 
 | Phase | Scope | Required gate |
 | --- | --- | --- |
-| 0 — In progress | Switch discovery and one-agent spike | Real Slack mention → Switch delivery → agent reply, with recorded evidence |
+| 0 — In progress | Switch discovery, custom SSE probe and OpenCode route | Real Slack round-trips, actual tool results and verified runtime/tool restrictions |
 | 1 — Planned | Monorepo, tooling, schema and CI | CI green and migrations applied to a fresh Supabase project |
 | 2 — Planned | Switch adapter and three identities | Agent presence in Slack and a real two-agent round-trip |
-| 3 — Planned | Google OAuth, encryption and tools | Actual test-account tool calls with database records |
+| 3 — Planned | Google OAuth, encryption and role-scoped MCP tools | Actual test-account tool calls with database records |
 | 4 — Planned | Multi-agent coordination | Real inquiry analysis delivered through Switch |
-| 5 — Planned | Approval and execution | Rejection has no write effect; approved artifacts are read back from Google |
+| 5 — Planned | Creator-only approval and execution | Wrong identities/rejection have no write effect; approved artifacts are read back from Google |
 | 6 — Planned | Dashboard and live activity | Feed updates during a real run without hardcoded entries |
 | 7 — Planned | End-to-end validation | Two clean-state real-account runs and prompt-injection isolation |
 

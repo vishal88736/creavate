@@ -2,6 +2,8 @@
 
 Status: prepared procedure; the live Switch/Slack steps have not passed. No Phase 1 work is authorized yet.
 
+**Current boundary (2026-11-06):** Slack and OpenCode are selected, and the user deferred credentials/account setup. Live commands below are reference instructions for a later explicitly re-enabled run. No live step should be treated as complete.
+
 ## Prerequisites
 
 Run commands from the Creavate repository root. Node with built-in node:sqlite is required for this disposable probe; this machine's Node 26.13.0 was checked. There is no npm dependency installation in Phase 0.
@@ -133,3 +135,13 @@ git diff --check
 The unit file reports the individual named checks when run directly. Tests are isolated synthetic inputs; none proves Slack, Switch, model or Google behavior.
 
 After live evidence is verified, update TASKS.md and OBSERVATIONS.md, commit Phase 0, report open questions, and stop for review. Phase 1's first action after explicit approval is the npm-workspace/tooling scaffold, followed by a real fresh-Supabase migration gate.
+
+## OpenCode route: deferred live verification
+
+The custom SSE probe above is a protocol diagnostic. It does not establish the selected OpenCode runtime. Before Phase 0 can pass, use the documented Switch session host with a separately registered OpenCode identity and capture a real Slack mention, actual Switch MCP tool return, posted receipt and independent Slack-visible reply.
+
+First verify the exact Core/Console/OpenCode version pairing and the tools exposed to the role. The inspected adapter uses an older OpenCode configuration shape; V2 compatibility is unresolved. Do not install an old connector plugin, enable full-access mode or silently rewrite the user's native OpenCode configuration.
+
+The host supplies the local Switch MCP server and managed skill. Keep the agent working directory and credentials private. The future Google MCP server must authenticate each role and enforce verified creator approval inside every write tool; the default host MCP permission behavior does not establish that guard.
+
+See [the sourced runtime findings](../../SWITCH_INTEGRATION.md#14-opencode-and-claude-code-runtime-setup) and [creator-only approval requirements](../../SWITCH_INTEGRATION.md#15-creator-only-approvals-and-revised-live-gate). No OpenCode provider/model request has been run.

@@ -31,3 +31,26 @@ The detailed MCP payloads and cloned code remain in ignored .local/. No credenti
 The standalone source, published docs and historical checked-in setup examples differ in places. Those discrepancies are findings to verify against the installed deployment, not grounds for guessing.
 
 When the live probe runs, append a dated record of its actual command, server version/protocol declaration, approval ID reference (without credentials), real tool-return counts, receipt/readback result, and independent confirmation that the reply appeared in Slack. Keep raw private IDs in the ignored evidence database. Do not turn a successful parser or approval-guard unit test into a live gate pass.
+
+## Reverification checkpoint — 2026-11-06
+
+| Check | Actual outcome |
+| --- | --- |
+| User decision A | Slack selected |
+| User decision B | OpenCode agents selected, superseding the Claude Code preference |
+| Live setup preference | User skipped credentials/accounts; live setup remains deferred |
+| Docs MCP | New initialize/search/read calls succeeded for runtime, providers, protocol, connection, events, settings, Slack and hosting; private snapshots saved under .local/discovery/2026-11-06 |
+| Rechecked source | Compared targeted runtime/API/config files against official HEAD fb5780cf67465f6b9f91d77bcad411b20bde6c2b; original working-tree/deployment pin preserved |
+| OpenCode source support | Session-host adapter, managed skill, MCP configuration and permission handling inspected; no live session created |
+| OpenCode package inventory | mise listed OpenCode 2.2.5 as active; this is inventory evidence, not successful CLI/session execution |
+| Default OpenCode launcher | Even --version ran its mise install step and timed out after 20 seconds; no successful installation or runtime-version result was established |
+| Existing direct executable | Located beneath the installed package without invoking mise. Its --version check failed on log-file creation in the read-only sandbox; this is a filesystem boundary, not an observed provider compatibility failure |
+| Claude Code | No mise installation listed; no authentication or Claude session attempted |
+| Docker | Service still inactive at the check; no startup attempted after the user deferred live setup |
+| Credential presence | Checked only configured/empty status. Slack and Switch credential fields were empty; no agent credential file was present. No values were printed |
+| Model/API execution | No model invocation, Slack write, registration or Google tool call |
+| Compatibility question | Switch emits the older flat OpenCode MCP/config shape; primary OpenCode V2 docs describe a different shape. Actual interoperability remains untested |
+| Approval requirements | Creator mapping, denial of agents/other room members, exact deal/action binding and per-role tool enforcement recorded as requirements, not implementation claims |
+| Gate | Custom SSE and OpenCode room round-trips are both pending; Phase 1 has not started |
+
+No local test or source comparison changes the missing live evidence. The prior 12 unit checks cover only the isolated probe; they do not prove the application's creator-identity approval guard, Google integration or OpenCode runtime.
