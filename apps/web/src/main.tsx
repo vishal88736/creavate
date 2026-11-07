@@ -213,6 +213,15 @@ function App() {
   const [campaignEvents, setCampaignEvents] = useState<Row[]>([]);
   const [filter, setFilter] = useState("all");
   const [showCalls, setShowCalls] = useState(false);
+  const missingSetup = config
+    ? [
+        { key: "database", label: "Workspace database" },
+        { key: "authentication", label: "Sign-in" },
+        { key: "creator", label: "Workspace owner" },
+        { key: "encryption", label: "Secure credential storage" },
+      ].filter((item) => !config.configuration?.[item.key])
+    : [];
+  const workspaceConfigured = !!config && missingSetup.length === 0;
   const ownsData = !!session && dataOwner === session.user.id;
   const overview = ownsData ? overviewData : null;
   const profile = ownsData ? profileData : null;
@@ -352,7 +361,11 @@ function App() {
   const scope = `${session?.user.id || "signed-out"}:${resource || "profile"}`;
   const load = useCallback(async () => {
     const generation = ++loadGeneration.current;
-    if (!session || activeUser.current !== session.user.id) {
+    if (
+      !session ||
+      activeUser.current !== session.user.id ||
+      !workspaceConfigured
+    ) {
       setLoading(false);
       return;
     }
@@ -388,12 +401,12 @@ function App() {
     } finally {
       if (generation === loadGeneration.current) setLoading(false);
     }
-  }, [session, api, resource, scope]);
+  }, [session, api, resource, scope, workspaceConfigured]);
   useEffect(() => {
     void load();
   }, [load]);
   useEffect(() => {
-    if (!client || !session) return;
+    if (!client || !session || !workspaceConfigured) return;
     let live = true;
     const channel = client
       .channel("creator-activity-" + session.user.id)
@@ -433,7 +446,7 @@ function App() {
       live = false;
       void client.removeChannel(channel);
     };
-  }, [client, session, load]);
+  }, [client, session, load, workspaceConfigured]);
   const refreshChannels = useCallback(
     async (cursor = "") => {
       const generation = ++channelGeneration.current;
@@ -504,6 +517,10 @@ function App() {
     if (currentView() !== v) history.pushState(null, "", "?view=" + v);
   };
   async function action(path: string, body: unknown = {}) {
+    if (!workspaceConfigured) {
+      navigate("profile");
+      return;
+    }
     if (!session) {
       setLogin(true);
       return;
@@ -815,9 +832,38 @@ function App() {
               <h3>Make this workspace yours</h3>
               <p>Sign in before authorizing Google or Slack.</p>
             </div>
-            <Button disabled={!authReady} onClick={() => setLogin(true)}>
+            <Button
+              disabled={!authReady || !workspaceConfigured}
+              onClick={() => setLogin(true)}
+            >
               Sign in <ArrowRight size={15} />
             </Button>
+          </Card>
+        )}
+        {missingSetup.length > 0 && (
+          <Card className="workspace-setup" role="status">
+            <div className="workspace-setup-title">
+              <Settings2 size={20} />
+              <div>
+                <h3>Before you connect</h3>
+                <p>These workspace settings need administrator setup.</p>
+              </div>
+            </div>
+            <ul>
+              {missingSetup.map((item) => (
+                <li key={item.key}>
+                  <span>{item.label}</span>
+                  <Badge tone="amber">Not configured</Badge>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="https://github.com/vishal88736/creavate/blob/main/docs/CONNECTIONS.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open setup guide <ArrowUpRight size={14} />
+            </a>
           </Card>
         )}
         <div className="section-title">
@@ -876,6 +922,7 @@ function App() {
               disabled={
                 busy ||
                 !authReady ||
+                !workspaceConfigured ||
                 (!!session && !profile) ||
                 (!profile?.google && !config?.googleOAuthConfigured)
               }
@@ -999,6 +1046,7 @@ function App() {
               disabled={
                 busy ||
                 !authReady ||
+                !workspaceConfigured ||
                 (!!session && !profile) ||
                 (!profile?.slack && !config?.slackOAuthConfigured)
               }
@@ -1286,6 +1334,25 @@ function App() {
             </div>
           </header>
           <main>
+            {config && !workspaceConfigured && view !== "profile" && (
+              <div className="setup-banner" role="status">
+                <Settings2 size={19} />
+                <div>
+                  <strong>Workspace setup is incomplete</strong>
+                  <p>
+                    Sign-in and app connections will be available after
+                    administrator setup.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("profile")}
+                >
+                  View setup <ArrowRight size={14} />
+                </Button>
+              </div>
+            )}
             {(error || loadError) && (
               <div className="alert alert-error" role="alert">
                 <AlertCircle size={17} />
@@ -1799,7 +1866,7 @@ function App() {
         title="Welcome to Creavate"
         description="Sign in to your creator workspace."
       >
-        {config?.supabaseUrl && config?.supabaseKey ? (
+        {workspaceConfigured && config?.supabaseUrl && config?.supabaseKey ? (
           <form
             className="login-form"
             onSubmit={(e) => {
@@ -1846,8 +1913,19 @@ function App() {
         ) : (
           <Empty
             icon={Settings2}
-            title="Workspace setup needed"
-            description="Configure Supabase authentication in the local environment file, then restart the server."
+            title="Sign-in setup is incomplete"
+            description="Workspace sign-in needs administrator setup before you can authorize your accounts."
+            action={
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setLogin(false);
+                  navigate("profile");
+                }}
+              >
+                View setup <ArrowRight size={15} />
+              </Button>
+            }
           />
         )}
       </Dialog>

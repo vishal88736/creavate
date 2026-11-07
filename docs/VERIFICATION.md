@@ -39,3 +39,11 @@ The application-owned OpenCode host uses the pinned source-backed SSE compatibil
 Thread-read proof is scoped to the authenticated creator/task/Brand Agent because tool_calls has no run_id column. Each MCP request separately verifies its active run, role and task. Google write tools additionally recheck the active run, exact approval/action and connection binding immediately before dispatch. Stopping a run prevents new claims; Google may finish a request already accepted before cancellation. An uncertain result requires provider/audit reconciliation, never an automatic repeat.
 
 Default Drive scope is drive.file; arbitrary existing briefs are not reachable without an explicit app grant or optional drive.readonly consent. The application does not simulate inaccessible content. Large-workspace pagination, history recovery and provider rate limits require real-account stress tests.
+
+## Local UI and sign-in follow-up
+
+The reported sign-in/Connect app failures were investigated on the running local server. Both frontend origins and the direct API returned health/config 200, with no configured database, Supabase authentication, Google/Slack OAuth applications, Switch credentials or creator. There was no reproduced crash. Those missing settings still prevent actual sign-in and provider consent; they are not replaced with local fake authentication.
+
+Two parser failures were reproduced and corrected: malformed JSON previously returned 500 and now returns 400; an over-limit body previously returned 500 and now returns 413. Unauthenticated requests remain 401. Expected 4xx log as warnings; genuine 5xx remain errors. New HTTP regressions verify that submitted bodies, query credentials and unexpected provider details are not exposed. `npm run check` passed with 60 tests, lint, typecheck and both builds.
+
+The fullscreen stylesheet and configuration-based setup notice were confirmed served by the active Vite server. Desktop/tablet outer padding, width cap, frame radius and shadow were removed; the shell now has full width and dynamic viewport minimum height. No browser surface was available for rendered verification.

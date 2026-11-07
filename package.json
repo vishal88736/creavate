@@ -11,7 +11,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -k -n api,web \"tsx watch apps/server/src/index.ts\" \"vite --config apps/web/vite.config.ts\"",
+    "dev": "concurrently --no-color -k -n api,web \"tsx watch apps/server/src/index.ts\" \"vite --config apps/web/vite.config.ts\"",
     "start": "node dist/server/index.js",
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",

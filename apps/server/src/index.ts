@@ -19,6 +19,7 @@ import {
 import { runtime, ingest, setupSwitch, receivePush } from "./runtime.js";
 import { decideApproval } from "./workflow.js";
 import { mcpHandler, configuredTools } from "./mcp.js";
+import { handleError } from "./errors.js";
 export const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", false);
@@ -363,36 +364,7 @@ if (existsSync(web)) {
   app.use(express.static(web));
   app.get("/{*path}", (_req, res) => res.sendFile(resolve(web, "index.html")));
 }
-app.use(
-  (
-    err: any,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction,
-  ) => {
-    if (res.headersSent) return;
-    const status =
-      err instanceof AppError
-        ? err.status
-        : err instanceof z.ZodError
-          ? 400
-          : 500;
-    const message =
-      err instanceof AppError
-        ? err.message
-        : err instanceof z.ZodError
-          ? "Request validation failed"
-          : "The request failed. Check server logs and account connection status.";
-    console.error(
-      JSON.stringify({
-        level: "error",
-        type: err?.name || "Error",
-        message: status === 500 ? "Internal server error" : message,
-      }),
-    );
-    res.status(status).json({ error: message });
-  },
-);
+app.use(handleError);
 const server = app.listen(config.PORT, "127.0.0.1", () => {
   console.log(`Creavate API listening on http://127.0.0.1:${config.PORT}`);
   if (config.ENABLE_WORKERS)

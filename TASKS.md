@@ -70,3 +70,13 @@ The user requested implementation ahead of account connection, then placed accou
 - [ ] Commercial Switch licensing/deployment decision before a paid hosted offering.
 
 Tests using the local test auth schema do not establish live Supabase behavior. Model availability, external account permissions, source/host pairing and actual Slack delivery remain unresolved until connected. The historical Phase 0 observations are retained as evidence, not as current service-running status.
+
+## Local dashboard and connection follow-up
+
+- [x] Remove desktop/tablet outer framing so the application fills the viewport.
+- [x] Show actual missing workspace prerequisites in Profile and on signed-out pages.
+- [x] Prevent protected loads/subscriptions and connection actions before base setup is complete.
+- [x] Correct malformed/oversized body responses (400/413), retain denial logs without mislabeling them as server faults, and test real local HTTP responses.
+- [x] Remove inherited terminal color conflicts from the local development launcher.
+- [ ] Supply real Supabase database/auth and Google/Slack OAuth application settings; sign-in and consent remain blocked until configured.
+- [ ] Verify the viewport layout and connection flows in an attached browser and against real accounts.
