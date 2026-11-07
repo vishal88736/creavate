@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@creavate/shared": ["packages/shared/src/index.ts"],
+      "@creavate/switch-adapter": ["packages/switch-adapter/src/index.ts"],
+      "@creavate/agents": ["packages/agents/src/index.ts"],
+      "@creavate/google-mcp": ["packages/google-mcp/src/index.ts"]
+    }
+  },
+  "include": ["apps", "packages", "scripts/*.ts", "tests", "*.ts"]
+}

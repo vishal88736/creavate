@@ -16,25 +16,57 @@
 - [x] Record creator-only approval and per-role tool enforcement requirements.
 - [x] Compare targeted upstream files with fb5780cf67465f6b9f91d77bcad411b20bde6c2b while preserving the deployment source pin.
 - [ ] Verify an exact OpenCode/Core/host version pairing and enforceable per-role tool exposure.
-- [ ] Make Docker accessible and start the official stack; record real health/readiness and server declaration.
-- [ ] Receive Slack workspace/channel details, connect its app and verify the creator identity mapping.
+- [x] Make Docker accessible and start the official stack; record real health/readiness and server declaration.
+- [x] Receive the Slack workspace URL and export the actual server manifest with a step-by-step setup guide.
+- [x] Verify cached direct OpenCode CLIs report 1.19.0 and 2.2.5 without changing the global launcher.
+- [x] Build/package the headless host from the same source pin and verify its CLI version.
+- [x] Start/stop isolated OpenCode 1.19.0; verify real health and provider inventory without a model call.
+- [x] Select the user-approved built-in OpenCode backend and record the model ID from actual inventory.
+- [ ] Enroll the controller and verify its model/tool/runtime pairing in the real room.
+- [ ] Connect the Slack app, confirm the dedicated channel and verify the creator identity mapping.
 - [ ] Run the real custom-agent SSE probe and independently confirm its reply in Slack.
 - [ ] Run the real OpenCode-agent room/MCP probe and independently confirm its tool-derived reply in Slack.
 - [ ] Record live evidence, pass the Phase 0 gate and commit phase completion.
-- [ ] Stop for user review and explicit permission to start Phase 1.
+- [ ] Review live discovery findings; the user separately authorized offline implementation in D021.
 
-**User-deferred:** credentials/account and live-connection setup were skipped on 2026-11-06. Continue source and local checks only until live setup is explicitly re-enabled. No fixture replaces a real-service gate.
+**Historical startup:** the isolated Switch stack passed local readiness on 2026-11-06 and was subsequently stopped at the user’s request. Application implementation is now authorized ahead of account connection; both real room probes remain open. No fixture replaces a live-service gate.
 
-The local operator ledger is a protocol-test facility; it does not implement verified creator approvals for sponsorship actions. Wrong-identity approval rejection is still required in the application.
+The local operator ledger is a protocol-test facility; it does not implement verified creator approvals for sponsorship actions. The application now implements and locally tests wrong-identity approval rejection; its real chat gate is still pending.
 
 A discovery checkpoint may be committed before the live gate; it does not mark Phase 0 complete.
 
-## Later phases (all not started)
+## Application implementation — authorized 2026-11-07
 
-1. Architecture: npm workspaces, tooling, env validation, CI and Supabase migrations. Gate: CI green plus migrations on a fresh live project.
-2. Switch/OpenCode connection and three creator-owned identities. Gate: real chat-room presence and a two-agent room-message round-trip.
-3. Google OAuth, encryption, role-scoped Google MCP tools and tool_calls logging. Gate: real test-account tool calls and their database records.
-4. Coordination, state machine and hop cap. Gate: real inquiry analysis handed off through Switch.
-5. Verified creator approval and gated writes. Gate: reject agents/other members and wrong deal/action approvals; rejection has no write effect; approved artifacts are read back from Google.
-6. Dashboard using the supplied visual reference and live activity. Gate: real-time updates during a run without hardcoded entries.
-7. Repeatable E2E validation. Gate: two clean-state real-account runs plus prompt-injection isolation.
+The user requested implementation ahead of account connection, then placed account connection controls in Profile. D021/D023 supersede the earlier Phase 0-only build boundary. No external-service gate is marked passed by this change.
+
+- [x] npm workspaces, TypeScript, lint, unit/database tests, production builds and CI workflow.
+- [x] Supabase schema, private credential tables, own-row reads and transactional audit/state storage.
+- [x] Strict developer env configuration, private env initialization and publishable-key checks.
+- [x] Verified Supabase authentication and single-creator deployment boundary.
+- [x] Profile-based Google/Slack OAuth, encrypted tokens, Google refresh and disconnect controls.
+- [x] Slack channel pagination, room provisioning and encrypted issued Switch credentials.
+- [x] Source-backed Switch HTTP/SSE adapter, heartbeats, persistent cursors and signed handoffs.
+- [x] OpenCode provider with isolated config/data, deny-default native tools and role-scoped authenticated MCP.
+- [x] Real Gmail ingestion/deduplication, read-only classification tools, PDF/text brief reading and Drive/Calendar functions.
+- [x] Immutable approval plans, verified creator decisions, exact provider-parameter checks and exclusive action claims.
+- [x] Campaign folder/files/deadlines/tasks, artifact readback and fail-safe uncertain-write handling.
+- [x] Task transitions, six-hop cap, per-run tool budgets, duplicate-handoff guard and interrupted-run reporting.
+- [x] Reference-inspired dashboard, inbox/deals/approval review, campaign task/deadline controls and live audit feeds.
+- [x] Real-account integration/E2E commands with no product fixture fallback.
+- [x] README, connection guide, deployment notes and preserved discovery sources.
+
+## Verification and original live gates
+
+- [x] Local unit/security/parser tests; see docs/VERIFICATION.md for the recorded run.
+- [x] Local PostgreSQL schema, concurrency, replay, row isolation and role-scoped MCP HTTP checks.
+- [ ] Fresh live Supabase migration/Auth/Realtime gate.
+- [ ] Custom SSE probe plus OpenCode model/tool reply visible in the real Slack room.
+- [ ] All three agents present and a real two-agent room handoff.
+- [ ] Every Google tool exercised against the actual test account and logged.
+- [ ] A real sponsorship email analyzed and relayed in Slack.
+- [ ] Creator-only rejection/approval and approved Google artifacts verified end to end.
+- [ ] Dashboard live updates and browser/mobile interaction review.
+- [ ] Two fresh-message E2E batches including injection isolation.
+- [ ] Commercial Switch licensing/deployment decision before a paid hosted offering.
+
+Tests using the local test auth schema do not establish live Supabase behavior. Model availability, external account permissions, source/host pairing and actual Slack delivery remain unresolved until connected. The historical Phase 0 observations are retained as evidence, not as current service-running status.

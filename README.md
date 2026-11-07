@@ -1,177 +1,101 @@
-# Creavate
+# creavate.
 
 **Create more. Coordinate less.**
 
 Connect platforms. Collaborate with AI. Focus on creating.
 
-Creavate is being built to coordinate a creator's brand-deal workflow across Gmail, Slack, Google Drive and Google Calendar. Three specialized agents communicate through [Switch](https://github.com/sandbox-quantum/switch), while the creator stays in control of campaign execution.
+Creavate coordinates sponsorship inquiries across Gmail, Slack, Google Drive and Calendar. Brand Agent analyzes an inquiry, Talent Manager asks the creator to approve the exact action plan, and Campaign Agent organizes the approved campaign. Agent handoffs use separate real Switch identities; OpenCode runs the tool-calling sessions.
 
-> **Development status:** Phase 0 — Switch discovery is in progress. This repository contains sourced integration research, a disposable protocol probe, setup tooling and the dashboard design reference. The live Switch/Slack gate has not passed. The full application, Google integrations and dashboard are planned.
+**Current status:** the application is implemented for account connection and live verification. Local security/database tests and builds are distinct from external-service gates. No live Google/Slack/OpenCode campaign run has passed yet. The prior Switch discovery stack was stopped at the user's request. See [TASKS.md](TASKS.md) and [verification evidence](docs/VERIFICATION.md).
 
-**Selected direction:** Slack for chat and three OpenCode agents, each with its own Switch identity. Credentials/live setup is user-deferred. OpenCode/Core version compatibility and per-role tool restrictions still need a real-service gate; see [runtime findings](SWITCH_INTEGRATION.md#14-opencode-and-claude-code-runtime-setup).
+## Start locally
 
-## The workflow
-
-The first release is designed around one complete sponsorship workflow:
-
-1. A sponsorship inquiry arrives in the creator's Gmail inbox.
-2. Brand Agent reads the inquiry and brief, extracts the deal terms, flags risks and assesses fit.
-3. Talent Manager presents the analysis and the exact proposed actions to the creator in Slack.
-4. The creator approves or rejects the request.
-5. After approval, Campaign Agent organizes the campaign in Drive, creates Calendar deadlines and records the task list.
-6. Talent Manager reports results backed by actual tool responses and persisted activity.
-
-Instagram and YouTube are outside the scope of v1.
-
-### Agent responsibilities
-
-| Agent | Responsibility | Tool boundary |
-| --- | --- | --- |
-| Brand Agent | Analyze inquiries, briefs, deliverables, fees, rights and risks | Read-only Gmail and Drive access |
-| Talent Manager | Coordinate handoffs, request approval and report results | Approval requests/checks and Switch room messaging |
-| Campaign Agent | Create the approved campaign assets, deadlines and tasks | Write tools that verify a recorded approval ID before acting |
-
-These product agents are planned. The current Phase 0 probe is a separate, deliberately limited protocol client.
-
-## What is available today
-
-| Component | Purpose |
-| --- | --- |
-| [Switch integration findings](SWITCH_INTEGRATION.md) | Verified protocol details, pinned sources, documentation differences and unresolved questions |
-| [Phase 0 runbook](docs/phase0/RUNBOOK.md) | Local Switch setup, Slack connection and the real-service probe procedure |
-| [Recorded observations](docs/phase0/OBSERVATIONS.md) | What was actually checked and which live checks remain open |
-| [Protocol probe](spikes/switch-mention/spike.mjs) | Register one custom identity, receive a mention over SSE, read real room history and post one history-derived reply |
-| [Probe unit checks](spikes/switch-mention/spike.test.mjs) | Approval guards, scope/expiry checks, replay prevention, SSE parsing and untrusted-text handling |
-| [Switch preparation script](scripts/phase0/prepare-switch.py) | Generate private configuration using the pinned upstream secret generator |
-| [Task list](TASKS.md) | Phase gates and outstanding work |
-| [Decisions](DECISIONS.md) | Accepted requirements, proposals and open decisions |
-
-The probe requires an operator-recorded approval before registration, connection claiming or replying. Its disposable local SQLite ledger is separate from the planned Supabase approval system. Test fixtures are isolated to the automated test file.
-
-## Get started with Phase 0
-
-### Prerequisites
-
-- Git.
-- Node.js with built-in `node:sqlite` support. The discovery checkpoint was checked with Node.js 26.13.0.
-- Python 3 and OpenSSL for preparing the upstream configuration.
-- Docker Engine with Docker Compose, accessible to your account, for the live Switch stack.
-- A Slack workspace where you can install an app and use a dedicated test channel.
-
-### Clone and run the local checks
+Requirements: Node.js 24+, npm, a development Supabase project, Google OAuth application, Slack app and self-hosted Switch. OpenCode needs a direct compatible executable; discovery verified the local 1.19.0 CLI/server, while its actual model/tool round-trip is still pending. All repository work stays on `main`.
 
 ```sh
-git clone https://github.com/vishal88736/creavate.git
-cd creavate
-node spikes/switch-mention/spike.test.mjs
-node --check spikes/switch-mention/spike.mjs
-git diff --check
+npm ci
+npm run env:init
+# Fill the developer settings in .env using the connection guide.
+npm run doctor
+npm run db:migrate
+npm run dev
 ```
 
-The Phase 0 probe uses Node built-ins and requires no npm package installation. Its 12 named unit checks passed at the discovery checkpoint. They validate local code; they do not establish a live Switch or Slack connection.
+Open **http://127.0.0.1:5173**. Sign in through Supabase, then go to **Profile & connections**:
 
-### Run against real Switch and Slack
+1. **Connect Google** authorizes Gmail, Drive and Calendar. Tokens are encrypted server-side.
+2. **Connect Slack** installs/authorizes the configured app and verifies the creator's Slack identity.
+3. Invite the Switch app into your Slack channel, then select that channel in Profile.
+4. **Connect room** provisions the three identities and adopts the real Slack channel through the sourced Switch Gateway APIs.
+5. **Start agents**, then **Check inbox**. Workers remain off by default until explicitly started.
 
-Follow the [Phase 0 runbook](docs/phase0/RUNBOOK.md) in order. It covers:
+Developer application secrets belong in ignored `.env`; users connect personal accounts through the website. Issued OAuth credentials and agent keys are encrypted in private database tables, not placed in browser bundles. The safe public template is [.env.example](.env.example). `env:init` initializes empty signing/encryption keys once, preserves existing values and adds newly available configuration names.
 
-1. Cloning the exact reviewed Switch revision.
-2. Preparing private configuration and validating the official Compose files.
-3. Starting the stack and checking actual health/readiness.
-4. Installing a Slack app, connecting the workspace and linking the creator's identity.
-5. Recording scoped operator approvals and registering the probe.
-6. Receiving a real Slack mention, recording SSE delivery, posting the actual history-derived result and reading it back.
-7. Independently confirming that the reply appeared in Slack.
+Read [CONNECTIONS.md](docs/CONNECTIONS.md) for exact redirect URLs, dashboard setup and each environment group. Filling `.env` does not replace Google/Slack consent or app installation.
 
-The prepared local configuration uses these loopback addresses:
+## What is implemented
 
-| Service | Address |
-| --- | --- |
-| Switch API | `http://127.0.0.1:18000` |
-| Switch Gateway | `http://127.0.0.1:13000` |
-| Switch PostgreSQL | `127.0.0.1:15432` |
+- Reference-inspired responsive React dashboard: overview, inbox, deals, approval review, campaigns, agent runs, live activity/tool calls, and Profile connections. Empty accounts show real setup/empty states; there are no canned deals or fabricated metrics.
+- Express API with verified Supabase authentication, creator restrictions, strict validation, rate limits and security headers.
+- Supabase migrations with own-row reads, private token/credential tables and no browser approval writes.
+- Google authorization-code flow with state, browser binding, PKCE, encrypted offline tokens and serialized refresh.
+- Gmail polling and authenticated Pub/Sub push-triggered ingestion, message-ID deduplication and Brand Agent classification. Push still has periodic catch-up polling; watches renew before expiry.
+- Read-only Brand tools for real threads, attachments, PDF/text briefs and OAuth-accessible Drive search.
+- Separate Switch identities and a source-backed HTTP/SSE adapter with heartbeats, persisted cursors, signed task handoffs and duplicate-event protection.
+- Isolated OpenCode sessions with deny-default native permissions and authenticated, role-scoped MCP. Raw email content never supplies tools, permissions or approval identity.
+- Immutable approval manifests, verified creator decisions from dashboard or actual Slack messages, exact deal/action binding, expiry and exclusive action claims.
+- Approved Drive folders, original-inquiry files, attachment uploads, brief copies, Calendar deadlines/reminders and task lists. Each Google artifact write is checked inside the provider layer and verified by reading it back.
+- Real tool-call/activity records, Supabase Realtime updates, task transitions, a default six-hop cap, per-run tool budgets, timeouts and visible failure reporting.
 
-These are configured addresses, not a claim that the services are running. Check port availability before startup. The recorded Compose configuration validation passed; the live mention/reply gate remains open.
+The tool layer also supports an explicitly approved Drive move. Default plans copy briefs to preserve originals. No outbound sponsorship-email sending, Instagram or YouTube integration is included.
 
-### Configuration and secrets
+## Approval boundary
 
-Use [.env.example](.env.example) as the template for an ignored `.env.phase0` file. Keep private environment files at mode `0600`.
+A model cannot approve its own plan. The API authenticates the creator through Supabase; chat decisions are read back from Slack and matched to the human identity established by Slack OAuth. Bot messages, other room members and quoted/embedded approval text are rejected.
 
-- `.env.phase0`: local Switch inputs and optional Slack credential staging.
-- `.env.phase0-agent`: the agent credentials returned by real registration.
-- `.local/upstream-switch/.env`: generated upstream Switch configuration.
-- `.local/phase0/probe.sqlite`: private probe approvals, write receipts and observations.
+Every action is bound to the creator, task, deal, exact manifest hash and action ID. Actual Google parameters are compared to the recorded plan inside the Google write layer. Exclusive database claims prevent duplicate writes. Ambiguous failures trigger readback where the resource ID is known; unresolved results remain `uncertain` and are not blindly retried. Partial artifacts remain visible in the audit log for review.
 
-These paths are ignored by Git. Never commit credentials or raw room/email evidence. Google credentials are not needed for Phase 0; encrypted Google token storage belongs to the later application implementation.
+## Commands and validation
 
-## Planned application architecture
+```sh
+npm run check             # TypeScript, lint, isolated unit tests, production builds
+npm run test:database     # Requires an empty disposable TEST_DATABASE_URL
+npm run test:integration  # Requires RUN_LIVE_TESTS=true and real connected accounts
+npm run test:e2e          # Two fresh real-message batches; real creator decisions
+npm run build
+npm start                # Serves API and built dashboard on 127.0.0.1:8787
+```
 
-| Layer | Planned technology |
-| --- | --- |
-| Dashboard | React, TypeScript, Vite, Tailwind CSS and shadcn/ui |
-| Backend | Node.js, TypeScript and Express |
-| Database and authentication | Supabase PostgreSQL, Supabase Auth and migrations in the repository |
-| Agent communication | Switch behind one application adapter |
-| Agent runtime | OpenCode sessions through the documented Switch host; provider/model in configuration; live validation pending |
-| Creator tools | Gmail API, Google Drive API, Google Calendar API and Slack through Switch |
+For `npm start`, set WEB_URL to the actual serving origin and update provider redirect allowlists accordingly. Public hosting needs an HTTPS reverse proxy. See [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-The planned npm-workspace layout is:
+Database tests use a minimal test-only auth fixture on real PostgreSQL. They establish SQL invariants, not live Supabase Auth/Realtime behavior. Mocks exist only under automated tests. The live integration command refuses to replace missing accounts with fixtures. [Fixture guidance](tests/fixtures/README.md) provides isolated email inputs for the real inbox cases; [DEMO.md](docs/DEMO.md) gives the operator runbook.
+
+## Repository
 
 ```text
-apps/
-  web/                   Dashboard
-  server/                API, ingestion, webhooks and agent host
-packages/
-  shared/                Types and Zod schemas
-  switch-adapter/        Switch protocol boundary
-  agents/                Instructions/config for three OpenCode identities
-  google-mcp/            Role-scoped Google tools and approval guards
-supabase/
-  migrations/            Application schema and access policies
+apps/web                  React + Vite + Tailwind + shadcn-style Radix components
+apps/server               Express, OAuth, ingestion, workflow, MCP and worker host
+packages/shared           Zod schemas, state/approval invariants, signing/encryption
+packages/switch-adapter   The only Switch wire/Gateway protocol boundary
+packages/agents           OpenCode provider, role instructions and tool allowlists
+packages/google-mcp       Real Google functions and exact-action write checks
+supabase/migrations       Schema, RLS, approvals, audit records and Realtime tables
+tests/unit                Isolated security/parser tests (mocks only here)
+tests/database            Disposable PostgreSQL invariant tests
+tests/integration         Explicit live-account checks
+scripts                   Env setup, doctor, migrations, provisioning and E2E
 ```
 
-These workspaces will be created in the later phases. The current executable code is isolated under `spikes/` and `scripts/phase0/`.
+## Discovery and remaining gates
 
-### Product requirements
+The user authorized implementation ahead of live account connection. This changes build order, not evidence: the original live gates remain open. [SWITCH_INTEGRATION.md](SWITCH_INTEGRATION.md) records verified sources and unresolved protocol/runtime questions, and [DECISIONS.md](DECISIONS.md) records the implementation choices.
 
-- Every write tool must verify an approval from the creator's authenticated identity, mapped from the chat user ID, and the exact deal/action in the database. Agents and other room members cannot approve.
-- Email and attachment content is untrusted data and cannot alter instructions, tools, identities or permissions.
-- Agent handoffs go through Switch and must respect authenticated identities and a persisted hop cap.
-- Tool calls, workflow transitions and activity must be recorded. Reported results must come from actual returns.
-- Stored Google tokens must be encrypted.
-- Mocked unit tests and live-service tests must remain separate.
-- Each phase must pass its live gate and receive the required review before the next phase starts.
+The application-owned OpenCode host is a separate implementation candidate from Switch's bundled headless controller. It uses the sourced OpenCode SDK contract and Switch's deprecated-but-documented SSE compatibility path. No claim is made that the native controller route or this combined route passed the real Slack gate. The source pin and deployed protocol must be reviewed during live validation.
 
-These are implementation requirements for v1; the Phase 0 probe does not establish that the full product already satisfies them.
+Before v1 is considered done: apply migrations to fresh live Supabase; verify all three identities and a real room handoff; exercise every Google tool; prove creator-only rejection/approval behavior; verify live dashboard updates; and pass two real clean-message E2E batches including injection isolation.
 
-## Roadmap and gates
+## Design and licensing
 
-| Phase | Scope | Required gate |
-| --- | --- | --- |
-| 0 — In progress | Switch discovery, custom SSE probe and OpenCode route | Real Slack round-trips, actual tool results and verified runtime/tool restrictions |
-| 1 — Planned | Monorepo, tooling, schema and CI | CI green and migrations applied to a fresh Supabase project |
-| 2 — Planned | Switch adapter and three identities | Agent presence in Slack and a real two-agent round-trip |
-| 3 — Planned | Google OAuth, encryption and role-scoped MCP tools | Actual test-account tool calls with database records |
-| 4 — Planned | Multi-agent coordination | Real inquiry analysis delivered through Switch |
-| 5 — Planned | Creator-only approval and execution | Wrong identities/rejection have no write effect; approved artifacts are read back from Google |
-| 6 — Planned | Dashboard and live activity | Feed updates during a real run without hardcoded entries |
-| 7 — Planned | End-to-end validation | Two clean-state real-account runs and prompt-injection isolation |
+The supplied [dashboard reference](docs/design/dashboard-reference.png) guided the pale surfaces, purple accents, navigation, overview and activity rail. Application data drives every operational entry.
 
-See [TASKS.md](TASKS.md) for the detailed checklist. Completing repository maintenance or merging a branch does not pass a product phase gate.
-
-## Dashboard direction
-
-The supplied image guides the planned Phase 6 dashboard: pale surfaces, purple accents, a left sidebar, central overview and execution table, and a right activity rail. Creavate will use real application records for its metrics, approvals and activity.
-
-**Design reference — this is not a screenshot of an implemented Creavate dashboard:**
-
-![Dashboard design reference for the planned Creavate interface](docs/design/dashboard-reference.png)
-
-## Repository workflow
-
-All project work is maintained on `main`. Keep changes focused, record decisions and phase evidence, and commit verified milestones. Additional branches are created only if explicitly requested.
-
-## Licensing and upstream software
-
-A license for Creavate has not yet been selected.
-
-Switch is external software with its own [Apache 2.0 plus modified Commons Clause terms](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/LICENSE). Its commercial deployment model remains an open decision in [DECISIONS.md](DECISIONS.md). The upstream checkout and generated runtime data are kept outside the tracked project files.
+Switch is external software under its own [Apache 2.0 plus modified Commons Clause terms](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/LICENSE). The paid-hosting/licensing decision remains open. Creavate's own license has not been selected. No generated credentials or private runtime evidence belongs in this public repository.

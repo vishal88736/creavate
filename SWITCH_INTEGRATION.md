@@ -40,7 +40,7 @@ Verified request shape:
 }
 ```
 
-Required fields are name, description, connector_type, and integration_profile. Optional fields include display_name, icon_url, tools, models, metadata, overwrite, and profile.command_capabilities. The name matches `^[a-z0-9][a-z0-9._-]*$`. Response: `{"id":"<agent id>","api_key":"<agent API key>"}`. Persist the issued key privately; do not re-register on every start. A duplicate name returns 409; overwriting rotates the key and replaces the profile.
+Required fields are name, description, connector*type, and integration_profile. Optional fields include display_name, icon_url, tools, models, metadata, overwrite, and profile.command_capabilities. The name matches `^[a-z0-9]a-z0-9.*-]\*$`. Response: `{"id":"<agent id>","api_key":"<agent API key>"}`. Persist the issued key privately; do not re-register on every start. A duplicate name returns 409; overwriting rotates the key and replaces the profile.
 
 Sources: [Agent protocol](https://docs.switchagents.ai/switch-rooms/internals/agent-protocol), [registration schemas](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/api/schemas.py), [registration handler and owner resolution](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/api/handlers.py), [personal keys](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/gateway/api_keys.py).
 
@@ -50,20 +50,20 @@ Sources: [Agent protocol](https://docs.switchagents.ai/switch-rooms/internals/ag
 
 The bridge base URL is the Switch server address. It is not necessarily the separate Gateway frontend address. Agent requests use `Authorization: Bearer <agent API key>`; a registration key cannot authenticate agent operations. Gateway management uses its authenticated session cookie instead.
 
-| Route | Request | Return / behavior |
-| --- | --- | --- |
-| `GET /health` | No credential | Public liveness probe; readiness is separate |
-| `GET /health/ready` | No agent credential | Checks database readiness; inspect actual response when deployed |
-| `POST /agents` | Registration bearer; body above | `{id, api_key}` |
-| `GET /agents/{id}/ops` | Agent bearer | `{operations: {name: {description, input_schema}}}` |
-| `POST /agents/{id}/ops/{operation}` | Agent bearer; arguments directly as JSON | `{result: <operation result>}` |
-| `POST /agents/{id}/message` | Agent bearer; `{room_id, content, metadata?}` | `{ok, event_id}` |
-| `GET /agents/{id}/events` | Agent bearer; `Accept: text/event-stream`; query below | Deprecated SSE connection |
-| `POST /agents/{id}/connection/beat` | Agent bearer; `{connection_id, generation?}` at inspected source | `{ok, rooms, cursor, position}` |
-| `GET /agents/{id}/connection/ws` | WebSocket upgrade; agent bearer; connection query | Preferred event transport |
-| `POST /agents/{id}/connection/subscribe` | `{connection_id, room_id, takeover?, generation?}` | Claim an existing membership; cooperative unless takeover |
-| `POST /agents/{id}/connection/unsubscribe` | Same connection/room identifiers | Releases the claim |
-| `GET /agents/{id}/rooms/{room_id}/history` | Agent bearer; `limit=50`, optional ISO-8601 `since` / `before` | `{events: [{sender, sender_name, body, timestamp}], has_more}` |
+| Route                                      | Request                                                          | Return / behavior                                                |
+| ------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `GET /health`                              | No credential                                                    | Public liveness probe; readiness is separate                     |
+| `GET /health/ready`                        | No agent credential                                              | Checks database readiness; inspect actual response when deployed |
+| `POST /agents`                             | Registration bearer; body above                                  | `{id, api_key}`                                                  |
+| `GET /agents/{id}/ops`                     | Agent bearer                                                     | `{operations: {name: {description, input_schema}}}`              |
+| `POST /agents/{id}/ops/{operation}`        | Agent bearer; arguments directly as JSON                         | `{result: <operation result>}`                                   |
+| `POST /agents/{id}/message`                | Agent bearer; `{room_id, content, metadata?}`                    | `{ok, event_id}`                                                 |
+| `GET /agents/{id}/events`                  | Agent bearer; `Accept: text/event-stream`; query below           | Deprecated SSE connection                                        |
+| `POST /agents/{id}/connection/beat`        | Agent bearer; `{connection_id, generation?}` at inspected source | `{ok, rooms, cursor, position}`                                  |
+| `GET /agents/{id}/connection/ws`           | WebSocket upgrade; agent bearer; connection query                | Preferred event transport                                        |
+| `POST /agents/{id}/connection/subscribe`   | `{connection_id, room_id, takeover?, generation?}`               | Claim an existing membership; cooperative unless takeover        |
+| `POST /agents/{id}/connection/unsubscribe` | Same connection/room identifiers                                 | Releases the claim                                               |
+| `GET /agents/{id}/rooms/{room_id}/history` | Agent bearer; `limit=50`, optional ISO-8601 `since` / `before`   | `{events: [{sender, sender_name, body, timestamp}], has_more}`   |
 
 Room-bound operations receive `X-Switch-Connection-Id: <connection UUID>`. Their argument object is unwrapped: do not send `{arguments: ...}`. Discover schemas from `/ops` on the actual server before relying on an operation. Distinguish Switch room UUIDs, Slack channel IDs, and opaque transport IDs.
 
@@ -95,11 +95,11 @@ data: {"type":"message","room_id":"<Switch room UUID>","bridge_id":"<bridge id>"
 
 The placeholder zeroes above illustrate numeric field types; they are not observations. Source models also permit sender_kind, sender_role, on_behalf_of, opening_message, and switch_notice. Treat sender IDs as opaque; never derive authorization by splitting their string format.
 
-| Domain event | Payload |
-| --- | --- |
-| message | addressed, sender, sender_name, message_id, body, timestamp; optional thread_id and attachment pointers |
-| command | command, args, user_id, user_name, optional thread_id |
-| room_join | member, member_name, timestamp, listening |
+| Domain event | Payload                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| message      | addressed, sender, sender_name, message_id, body, timestamp; optional thread_id and attachment pointers |
+| command      | command, args, user_id, user_name, optional thread_id                                                   |
+| room_join    | member, member_name, timestamp, listening                                                               |
 
 Connection/control frames include connection_state, gap, evicted, subscription_changed, room_released; WebSocket additionally carries ping/refused. Revision-specific frames include approval_outcome and session_command. Do not assume every frame is a message. The first connection_state supplies the actual rooms, cursor, generation, protocol, heartbeat interval, and server declaration. Store the actual values.
 
@@ -118,6 +118,7 @@ Sources: [Connection documentation](https://docs.switchagents.ai/switch-rooms/in
 ## 4. Posting and addressing agents or people
 
 Verified operation signatures at the pinned source:
+
 - `post_message({body, thread_id?})` posts to the connection's room and returns `{event_id}`.
 - `send_targeted_message({body, target_names?, target_roles?, thread_id?})` targets names from list_participants, or roles. Supply at least one target list. Returns `{event_id, target_statuses}`.
 - The operation adds mentions itself: do not prefix body with an extra @.
@@ -208,28 +209,28 @@ Sources: [Self-hosting](https://docs.switchagents.ai/switch-rooms/deploy/self-ho
 
 See [observations](docs/phase0/OBSERVATIONS.md) and [runbook](docs/phase0/RUNBOOK.md).
 
-Observed: docs MCP requests succeeded; upstream source cloned; Docker client is installed, but daemon access is denied and the service was inactive. Passwordless sudo cannot start it. The user selected enabling local Docker. No Slack workspace URL, workspace/channel IDs, or credentials have been supplied.
+Observed on 2026-11-06 after the user resumed setup: Docker Server 29.9.3 is accessible through a newgrp docker child of this existing session. The official source-built stack is running in creavate-phase0, PostgreSQL is healthy, Gateway returned HTTP 200, generated-admin authentication succeeded, and all Core readiness checks passed. Authenticated GET /gateway/version returned {"version":"0.31.0","contracts":{"gateway-api":{"speaks":1,"accepts":1}}}. The Slack workspace URL has been supplied and kept in private configuration; app installation, channel confirmation and credentials remain pending.
 
 The prepared spike is isolated under spikes/switch-mention. Its runtime invokes actual Switch HTTP/SSE only. Mock data exists only in its automated tests. It requires an operator-recorded, scoped approval ID in a disposable local SQLite ledger before registration, connection claim, or posting; the product's Supabase approval system is not implemented. No probe approval has been minted automatically.
 
-**Not observed:** Switch server health, Slack connection, agent registration, mention delivery, heartbeat, reply receipt, readback, or Slack-visible reply. Phase 0 remains open; Phase 1 is prohibited until the live gate and user review pass.
+**Not observed:** Slack connection, agent registration, mention delivery, heartbeat, reply receipt, readback, or Slack-visible reply. Phase 0 remains open; Phase 1 is prohibited until the live gate and user review pass.
 
 ## 12. Open items for review
 
-| Item | Current finding / required input |
-| --- | --- |
-| Docker | User is enabling local access; require docker info to work for this running account |
-| Slack | Need workspace URL, workspace/team ID, dedicated test channel, app install permission and local tokens |
-| Core pin | Source SHA is fixed; released image/digest compatibility not verified |
-| Transport | Keep requested SSE probe; approve WebSocket as the production default |
-| Policy drift | Confirm effective default and self-update behavior on the actual deployment; provision through the owner UI |
-| Approval UI | Built-in source exists; live interoperability and creator-only binding remain unverified |
-| SSE heartbeat drift | Published example sends cursor; pinned model declares generation instead. Probe follows inspected model; verify actual deployed response |
-| Slack manifest drift | Published docs require app_home_opened when declaring agent_view; the inspected generated manifest declares agent_view but lists only message events. Validate with Slack before changing the plan |
-| Compose contract drift | Pinned standalone YAML declares stack-compose revision 1; artifacts.yaml declares revision 2. Source/config validation alone does not resolve deployed compatibility |
-| SDK | No public Rooms SDK established; private TS code is reference only |
-| Phase 0 write grants | Record operator-approved scope before executing probe writes; no automatic approval |
-| Commercial distribution | Upstream license is Apache 2.0 with modified Commons Clause including derivatives and a Sell restriction; intended paid deployment/licensing needs an owner decision, not an assumption |
+| Item                    | Current finding / required input                                                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker                  | Resolved for local Phase 0: daemon accessible and official source-built stack ready                                                                                                                         |
+| Slack                   | Workspace URL received privately. User is completing app creation/installation; team ID, channel, creator link and active bridge still need verification. See the [setup guide](docs/phase0/SLACK_SETUP.md) |
+| Core pin                | Source-built at the fixed SHA; actual Core image ID and 0.31.0 server declaration recorded. Agent/controller compatibility remains pending                                                                  |
+| Transport               | Keep requested SSE probe; approve WebSocket as the production default                                                                                                                                       |
+| Policy drift            | Confirm effective default and self-update behavior on the actual deployment; provision through the owner UI                                                                                                 |
+| Approval UI             | Built-in source exists; live interoperability and creator-only binding remain unverified                                                                                                                    |
+| SSE heartbeat drift     | Published example sends cursor; pinned model declares generation instead. Probe follows inspected model; verify actual deployed response                                                                    |
+| Slack manifest drift    | Published docs require app_home_opened when declaring agent_view; the inspected generated manifest declares agent_view but lists only message events. Validate with Slack before changing the plan          |
+| Compose contract drift  | Pinned standalone YAML declares stack-compose revision 1; artifacts.yaml declares revision 2. Source/config validation alone does not resolve deployed compatibility                                        |
+| SDK                     | No public Rooms SDK established; private TS code is reference only                                                                                                                                          |
+| Phase 0 write grants    | Record operator-approved scope before executing probe writes; no automatic approval                                                                                                                         |
+| Commercial distribution | Upstream license is Apache 2.0 with modified Commons Clause including derivatives and a Sell restriction; intended paid deployment/licensing needs an owner decision, not an assumption                     |
 
 License source: [upstream LICENSE](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/LICENSE). This records the text and the unresolved product decision; it does not conclude that a particular commercial arrangement is permitted.
 
@@ -241,23 +242,23 @@ This is an addition to the existing discovery report, not a replacement for its 
 
 - **Decision A selected: Slack.** Keep platform/bridge configuration and verified identity mapping outside agent instructions. Discord or Telegram must be a configuration/adapter change, not a change to deal-analysis behavior.
 - **Decision B selected: OpenCode agents**, replacing the earlier Claude Code preference. Plan three separately registered Switch identities with OpenCode sessions. A native OpenCode subagent invocation does not establish a Switch identity or the required room-message handoff.
-- The user answered **skip** to credential/account setup. Live connection work is deferred; no provider authentication, model invocation, agent registration, Slack posting or Google tool execution was performed.
+- The earlier **skip** was superseded by **Resume live setup**. The user supplied the workspace URL and enabled Docker; the local stack is now ready. No agent registration, model invocation, Slack posting or Google tool execution has occurred.
 - This does not pass the Phase 0 gate or authorize Phase 1. The custom Node probe remains an isolated diagnostic/fallback; it is not silently selected as the production runtime.
 
 ### Sources rechecked
 
 The official docs MCP was initialized again and queried with search and filesystem reads. Current responses for protocol, connection, events, settings, providers, runtime, Slack and hosting are retained privately in `.local/discovery/2026-11-06/`.
 
-| Existing topic | Reverification result |
-| --- | --- |
-| Agent registration and HTTP operations | Current MCP protocol page still documents POST /agents with a separate registration key and agent-key-authenticated operations |
-| Event transport | Current docs still prefer WebSocket and deprecate SSE; SSE compatibility probe remains pending |
-| Connection and deployment instructions | MCP connection and self-host page contents were identical to the earlier cached reads |
-| Addressing policies | Protocol/settings disagreement remains; effective policy must be read from the installed deployment |
-| SDK and approval HTTP surface | Inspected pinned source remains the basis for the existing schema descriptions; no new live evidence |
-| Provider runtime | Current MCP runtime page explicitly lists both OpenCode and Claude Code and describes their host-supplied MCP/skill setup |
-| Current upstream comparison | Recorded upstream HEAD fb5780cf67465f6b9f91d77bcad411b20bde6c2b and fetched it for inspection. Working-tree/deployment pin remains 0d2a57ce643a57a56cd955f6a80324327558f0dd |
-| Targeted source drift | OpenCode adapter/config, agent API paths, addressing module, standalone Compose and artifacts registry were unchanged between those commits. The TS runtime payload type only clarified legacy owner/admin role handling |
+| Existing topic                         | Reverification result                                                                                                                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Agent registration and HTTP operations | Current MCP protocol page still documents POST /agents with a separate registration key and agent-key-authenticated operations                                                                                           |
+| Event transport                        | Current docs still prefer WebSocket and deprecate SSE; SSE compatibility probe remains pending                                                                                                                           |
+| Connection and deployment instructions | MCP connection and self-host page contents were identical to the earlier cached reads                                                                                                                                    |
+| Addressing policies                    | Protocol/settings disagreement remains; effective policy must be read from the installed deployment                                                                                                                      |
+| SDK and approval HTTP surface          | Inspected pinned source remains the basis for the existing schema descriptions; no new live evidence                                                                                                                     |
+| Provider runtime                       | Current MCP runtime page explicitly lists both OpenCode and Claude Code and describes their host-supplied MCP/skill setup                                                                                                |
+| Current upstream comparison            | Recorded upstream HEAD fb5780cf67465f6b9f91d77bcad411b20bde6c2b and fetched it for inspection. Working-tree/deployment pin remains 0d2a57ce643a57a56cd955f6a80324327558f0dd                                              |
+| Targeted source drift                  | OpenCode adapter/config, agent API paths, addressing module, standalone Compose and artifacts registry were unchanged between those commits. The TS runtime payload type only clarified legacy owner/admin role handling |
 
 The current upstream comparison is not a deployment upgrade or a claim that all repository files are unchanged. Sources: [comparison](https://github.com/sandbox-quantum/switch/compare/0d2a57ce643a57a56cd955f6a80324327558f0dd...fb5780cf67465f6b9f91d77bcad411b20bde6c2b), [current OpenCode adapter configuration](https://github.com/sandbox-quantum/switch/blob/fb5780cf67465f6b9f91d77bcad411b20bde6c2b/console/packages/agent-providers/src/opencode/config.ts), and the documentation links in the original sections.
 
@@ -283,14 +284,14 @@ Sources: [Sessions and the runtime](https://docs.switchagents.ai/switch-rooms/in
 
 The host discovers the operation registry and exposes its actual schemas, plus media tools. The exact tool list comes from the running server, not a guessed SDK list.
 
-| Group | Examples at the inspected source |
-| --- | --- |
-| Room entry and context | list_rooms, connect_to_room, read_context, list_participants |
-| Messages and handoffs | post_message, send_targeted_message |
-| Attachments | download_attachment, send_attachment |
-| Roles and shared context | list_roles, assume_role, release_role, load_internal_documents |
-| Room administration | create_room, update_room, invite_agent_to_room, add_users_to_room |
-| Identity/management | list_agents, get_agent_detail, update_agent_detail, managed-agent operations |
+| Group                    | Examples at the inspected source                                             |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| Room entry and context   | list_rooms, connect_to_room, read_context, list_participants                 |
+| Messages and handoffs    | post_message, send_targeted_message                                          |
+| Attachments              | download_attachment, send_attachment                                         |
+| Roles and shared context | list_roles, assume_role, release_role, load_internal_documents               |
+| Room administration      | create_room, update_room, invite_agent_to_room, add_users_to_room            |
+| Identity/management      | list_agents, get_agent_detail, update_agent_detail, managed-agent operations |
 
 Claude Code presents tools as `mcp__switch__<tool>`. The inspected OpenCode configuration matches MCP permissions with `<server>_<tool>` patterns. These names are host formatting, not new Switch API endpoints.
 
@@ -304,7 +305,7 @@ The default catalog is broader than our role allowlists. Host-side tool prompts 
 
 **Inference, not a live failure claim:** this schema difference is a compatibility risk that needs an exact provider/Core/Console version test. Either use a verified compatible provider version or review a documented adapter update. No downgrade, global configuration rewrite or dependency installation was deliberately performed to resolve it.
 
-Observed locally: mise inventory reported an active OpenCode 2.2.5 installation entry. The actual `opencode` launcher runs a mise install step before forwarding even `--version`; that check failed with a 20-second package-resolution/install timeout. An existing direct package executable was then located without mise; its --version check failed while creating its normal log in the read-only sandbox. This filesystem boundary is not a demonstrated runtime compatibility failure. The CLI version and working session remain unverified. Claude Code's mise inventory was empty; no Claude provider was installed or authenticated.
+Observed locally: the global `opencode` launcher runs a mise installation step before forwarding even `--version`; that check timed out. Running the already cached executables with filesystem permission later returned **opencode v2.2.5** and **1.19.0**. The cached V1 executable is a candidate for this adapter; no global downgrade or native configuration change was made. Successful version commands do not prove working sessions, model access or Switch interoperability. Claude Code's mise inventory was empty; no Claude provider was installed or authenticated.
 
 Sources: [OpenCode adapter config at compared upstream HEAD](https://github.com/sandbox-quantum/switch/blob/fb5780cf67465f6b9f91d77bcad411b20bde6c2b/console/packages/agent-providers/src/opencode/config.ts), [managed OpenCode home](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-providers/src/opencode/home.ts), [provider adapter](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-providers/src/opencode/opencode-adapter.ts), [OpenCode V2 MCP reference](https://opencode.ai/v2/docs/mcp-servers/), and [OpenCode V1 permissions reference](https://opencode.ai/docs/en/permissions/).
 
@@ -328,7 +329,7 @@ The disposable operator ledger in the existing protocol probe is not the product
 
 Source for Switch's answerer recording/policy checks: [session activity service](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/session_activity/service.py). Creator-only approval, role segregation and the application database guard are user requirements, not claims about built-in Switch enforcement.
 
-When live setup is explicitly re-enabled, the Phase 0 gate needs:
+With live setup resumed, the Phase 0 gate still needs:
 
 1. Real Core health/readiness and its version/protocol declaration.
 2. The custom SSE compatibility probe's mention, heartbeat, actual tool return, receipt/readback and Slack-visible reply.
@@ -336,4 +337,40 @@ When live setup is explicitly re-enabled, the Phase 0 gate needs:
 4. An exact compatible OpenCode/Core/host pairing, plus evidence that the intended tool restrictions take effect.
 5. A recorded list of remaining questions and user review before Phase 1.
 
-Current state: **both real-service probes are unverified and credential setup is user-deferred**. No fixture substitutes for either gate. Open decisions are the exact runtime version pairing, enforceable per-role tool exposure, verified creator identity mapping and the unchanged earlier deployment/approval questions.
+Historical startup state on 2026-11-06: the local Switch stack passed readiness; both real room probes remained unverified. The stack was subsequently stopped at the user’s request and has not been restarted by application verification. No fixture substitutes for either gate. Open decisions are the exact runtime version pairing, enforceable per-role tool exposure, verified creator identity mapping and the unchanged earlier deployment/approval questions.
+
+## 16. Headless OpenCode host and resumed deployment — 2026-11-06
+
+The official headless controller runs the same agent host as Console and supports OpenCode. It requires Node >=22.13 and `FEATURE_FLAGS_ENABLED=agent_management`. `GATEWAY_PUBLIC_URL` must name the Core agent bridge, not a separate UI-only origin. This isolated deployment enables the flag, generates `CONTROLLER_TOKEN_SECRET`, and sets the public agent-bridge URL to local port 18000.
+
+Documented provisioning is a one-time code from Gateway Machines, followed by `switch-agent-controller enroll --server <agent-bridge-url> --code <code> --data-dir <private-dir>` and foreground `run --data-dir <private-dir>`. Enrollment codes expire after ten minutes. File credential storage is an explicit supported option. No desktop install or systemd unit is necessary for the spike.
+
+The controller owns one authenticated WebSocket and relays events/tools for its managed identities. Managed agents receive local relay tokens; their per-agent SSE/connection routes are rejected with 410. Therefore the unmanaged custom SSE diagnostic and managed OpenCode room test must use separate identities; SSE success cannot establish the OpenCode route.
+
+The controller README documents building the workspace packages from source. The official stable controller v0.31.0 release metadata inspected on this date contains a package and installer, but no signature asset; the current source installer requires an Ed25519 `.tgz.sig`. Use the same inspected source pin for this discovery host rather than bypassing the signature requirement or assuming controller/Core release numbers imply compatibility. The frozen-lockfile install completed with pnpm 10.28.2 and install scripts disabled. All six selected workspace builds and the official packaging script passed. The bundled CLI reports 0.1.1; its tarball SHA-256 is b065b290dc456d8169d496521121b64df7ba7c53324b222ccf72f10bbe59bb62. Enrollment and a managed agent session remain unverified.
+
+Local source-build image identity for Core: `sha256:348ca3457afc321d60d06c81dc7a7673a608e5a9aba090a58371983c25172f77`. The build passed the source SHA/repository as image build arguments. Some upstream base tags are floating; this is an observed image identity, not a claim of fully reproducible bytes. The Postgres 16 image ID is recorded privately with the runtime evidence.
+
+Sources: [headless controller README](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-controller/README.md), [installer/signature contract](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-controller/install.sh), [managed relay](https://github.com/sandbox-quantum/switch/tree/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-controller/src), [Gateway enrollment route](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/management/gateway_routes.py), [stable release assets](https://github.com/sandbox-quantum/switch/releases/tag/switch-agent-controller-v0.31.0), and private observed HTTP/Docker responses summarized in [OBSERVATIONS.md](docs/phase0/OBSERVATIONS.md).
+
+A local readiness probe started the cached OpenCode 1.19.0 executable with private XDG configuration/data/cache/state, a fresh loopback Basic-auth password, and `{permission:{"*":"deny"},mcp:{}}`. Actual GET `/global/health` returned `{healthy:true,version:"1.19.0"}`; GET `/provider` returned HTTP 200 with connected provider ID `opencode`. The child was then stopped. This proves local server/config acceptance and inventory parsing only: it does not prove a model is callable, a remote MCP tool is authorized, or a Switch message can round-trip. No model invocation occurred; no Anthropic/other API key is configured in the inspected environment. The user subsequently selected OpenCode's built-in backend. A fresh isolated `/provider` response lists `big-pickle` as its default, active, with input/output cost 0. The selected Phase 0 model is therefore `opencode/big-pickle`; model callability is still untested.
+
+Per-role restrictions remain open. The managed controller's V1 definition carries provider/model, advanced configuration, instructions and runtime flags; it does not expose arbitrary local MCP registration in that definition. Native provider configuration is inherited, while the watcher template starts with `mcpServers: {}` before host preparation. Do not grant agents a native Google connector or broad Google tokens as a shortcut around the future authenticated, role-scoped Google MCP service. Its write guard must remain authoritative even if provider permissions or room policy change. This is a design constraint requiring live verification, not an implemented security claim.
+
+Additional sources: [controller watcher template](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-controller/src/template.ts), [managed definition schema](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/management/schemas.py), [source readiness check](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-providers/src/opencode/sign-in.ts), and [server health/auth lifecycle](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-providers/src/opencode/server.ts). Private local response: .local/phase0/opencode-readiness/result.json.
+
+## 17. Application implementation candidate — 2026-11-07
+
+The user authorized application code before account connection. This changes implementation order, not the live gate. The native controller discovery results remain source/local-readiness evidence only.
+
+Creavate now has its own host for three custom registered identities, using the verified HTTP/SSE compatibility contract behind packages/switch-adapter and OpenCode's public SDK v2 client surface as inspected in the pinned provider transport. Role-scoped Creavate MCP owns Google/workflow tools; broad native Switch tool exposure is not inherited. This is an application-owned OpenCode host, not a claim that the bundled headless controller route passed.
+
+The adapter uses the sourced registration schema, /ops discovery, connect_to_room, list_participants, send_targeted_message, legacy history and SSE/generation heartbeat routes. Room adoption/membership uses the inspected Gateway RoomCreateRequest/RoomAgentsRequest shapes. Roster membership is checked before replay. Roster agent IDs are not treated as transport sender IDs. Inbound handoffs must match both the signed persisted envelope and the exact event_id returned by the real outbound tool call; the SSE payload.message_id is that event ID. A copied signed body on another event cannot trigger a run. Persistent cursors and unique handoff IDs prevent duplicate delivery from becoming permission to repeat work.
+
+Profile Slack OAuth verifies the consenting Slack human independently. Chat approval is read from Slack's real history/replies and matched to that verified user; a Switch message body is not treated as an approval proof. Exact creator/deal/action binding and write claims remain in the database/tool layer.
+
+New source references: [OpenCode transport SDK calls](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/console/packages/agent-providers/src/opencode/transport.ts), [Gateway room schemas](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/gateway/schemas.py), [targeting/history/room operations](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/operations/definitions.py), [connection-state source](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/protocol/stream.py).
+
+Still unresolved: the combined host/model/room round-trip, effective deployed policy, real Slack manifest acceptance/delivery, native approvals interoperability, and SSE's longer-term production support. See docs/VERIFICATION.md for local results; no live protocol success is synthesized from those tests.
+
+The pinned serializer leaves sender_kind null for agent messages and marks only platform messages as platform; treating the field as the literal agent would discard legitimate deliveries. The buffer also suppresses an agent’s own events. Host-generated inquiry and approval wakeups therefore use another registered identity to address Talent Manager; they describe actual Gmail/database results and carry audited receipts, rather than model-generated conversations. Handoffs remain capped at six per task. Sources: [message serializer](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/protocol/message_events.py), [own-event suppression](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/protocol/event_buffer.py), and [targeted-message return receipt](https://github.com/sandbox-quantum/switch/blob/0d2a57ce643a57a56cd955f6a80324327558f0dd/core/switch_core/bridges/agent/operations/definitions.py).

@@ -1,12 +1,12 @@
 # Phase 0 runbook
 
-Status: prepared procedure; the live Switch/Slack steps have not passed. No Phase 1 work is authorized yet.
+Status: the local Switch stack passed readiness on 2026-11-06. Slack and agent room tests have not passed. No Phase 1 work is authorized yet.
 
-**Current boundary (2026-11-06):** Slack and OpenCode are selected, and the user deferred credentials/account setup. Live commands below are reference instructions for a later explicitly re-enabled run. No live step should be treated as complete.
+**Current boundary (2026-11-06):** the user resumed live setup, supplied a Slack workspace URL and enabled Docker. The isolated stack is running; continue with the [Slack setup guide](SLACK_SETUP.md). Both real room probes remain mandatory.
 
 ## Prerequisites
 
-Run commands from the Creavate repository root. Node with built-in node:sqlite is required for this disposable probe; this machine's Node 26.13.0 was checked. There is no npm dependency installation in Phase 0.
+Run commands from the Creavate repository root. Node with built-in node:sqlite is required for this disposable probe; this machine's Node 26.13.0 was checked. The standalone protocol probe needs no npm dependency installation. Building the optional official headless OpenCode controller uses upstream workspace dependencies in ignored .local/. No product monorepo has been scaffolded.
 
 The cloned official source must be at 0d2a57ce643a57a56cd955f6a80324327558f0dd. Keep it under ignored .local/upstream-switch. A fresh checkout can obtain it with:
 
@@ -22,7 +22,7 @@ sudo systemctl start docker
 docker info
 ```
 
-The second command must work for this account before the agent can run the stack. If it is still denied, configure your local Docker permissions and refresh the session as needed; do not send a sudo password in chat. No system installation or user/group change has been performed by this project.
+The second command must work for this account before the agent can run the stack. On this machine the user started Docker and added their account to the Docker group; the existing agent process uses a newgrp docker child to obtain the refreshed group. Do not send a sudo password in chat. The project did not install Docker or change system permissions.
 
 ## Prepare and start the official source-built stack
 
@@ -43,7 +43,26 @@ docker compose --project-name creavate-phase0 \
   --profile gateway config --quiet
 ```
 
-Use the same command with `up -d --build` instead of `config --quiet` when Docker is available. This creates a separate Compose project and uses the recorded source, not an unverified published latest tag. Mattermost's collab profile is omitted because the gate requires Slack.
+Build and then start the same isolated project (run each command from the repository root):
+
+```sh
+docker compose --project-name creavate-phase0 \
+  --project-directory .local/upstream-switch \
+  --env-file .local/upstream-switch/.env \
+  -f .local/upstream-switch/deploy/local/standalone-docker-compose.yml \
+  -f .local/upstream-switch/deploy/local/standalone-docker-compose.build.yml \
+  build --build-arg SWITCH_GIT_COMMIT=0d2a57ce643a57a56cd955f6a80324327558f0dd \
+  --build-arg SWITCH_GIT_REPOSITORY_URL=https://github.com/sandbox-quantum/switch switch gateway
+
+docker compose --project-name creavate-phase0 \
+  --project-directory .local/upstream-switch \
+  --env-file .local/upstream-switch/.env \
+  -f .local/upstream-switch/deploy/local/standalone-docker-compose.yml \
+  -f .local/upstream-switch/deploy/local/standalone-docker-compose.build.yml \
+  --profile gateway up -d --no-build
+```
+
+These commands completed on 2026-11-06. This creates a separate Compose project and uses the recorded source, not an unverified published latest tag. Mattermost's collab profile is omitted because the gate requires Slack.
 
 Verify actual health:
 
@@ -55,6 +74,8 @@ curl --fail --silent --show-error http://127.0.0.1:18000/health/ready
 Open the Gateway at http://127.0.0.1:13000. Read the generated admin login locally from .local/upstream-switch/.env; keep it out of screenshots/transcripts. Create a personal registration key on API Keys so the probe belongs to that signed-in user.
 
 ## Connect your Slack workspace
+
+Use the [step-by-step local setup guide](SLACK_SETUP.md) and the exported [actual server manifest](slack-app-manifest.json). The Gateway labels its form **Register messaging app**; Slack app creation happens on Slack's website.
 
 Required non-secret information: workspace URL, workspace/team ID (T...), dedicated test channel name and channel ID (C... or G...), and confirmation that you can install an app.
 
@@ -136,7 +157,7 @@ The unit file reports the individual named checks when run directly. Tests are i
 
 After live evidence is verified, update TASKS.md and OBSERVATIONS.md, commit Phase 0, report open questions, and stop for review. Phase 1's first action after explicit approval is the npm-workspace/tooling scaffold, followed by a real fresh-Supabase migration gate.
 
-## OpenCode route: deferred live verification
+## OpenCode route: live verification pending
 
 The custom SSE probe above is a protocol diagnostic. It does not establish the selected OpenCode runtime. Before Phase 0 can pass, use the documented Switch session host with a separately registered OpenCode identity and capture a real Slack mention, actual Switch MCP tool return, posted receipt and independent Slack-visible reply.
 
@@ -145,3 +166,34 @@ First verify the exact Core/Console/OpenCode version pairing and the tools expos
 The host supplies the local Switch MCP server and managed skill. Keep the agent working directory and credentials private. The future Google MCP server must authenticate each role and enforce verified creator approval inside every write tool; the default host MCP permission behavior does not establish that guard.
 
 See [the sourced runtime findings](../../SWITCH_INTEGRATION.md#14-opencode-and-claude-code-runtime-setup) and [creator-only approval requirements](../../SWITCH_INTEGRATION.md#15-creator-only-approvals-and-revised-live-gate). No OpenCode provider/model request has been run.
+
+
+### Pinned headless controller preparation (executed)
+
+The current controller source supports OpenCode and can run in a foreground process. Enable `agent_management`, generate `CONTROLLER_TOKEN_SECRET` and set `GATEWAY_PUBLIC_URL` to the Core URL. The fresh setup helper now does this without overwriting an existing env. These settings were applied privately before this stack started.
+
+The source at the recorded pin was built with its declared pnpm 10.28.2. The following steps passed; they affect only ignored project-local tooling and the upstream checkout, not global OpenCode or system services:
+
+```sh
+npm install --prefix .local/phase0-node-cli --cache .local/phase0-npm-cache \
+  --ignore-scripts --no-audit --no-fund --save-exact pnpm@10.28.2
+
+node .local/phase0-node-cli/node_modules/pnpm/bin/pnpm.cjs \
+  --dir .local/upstream-switch/console --filter @switch-console/agent-controller... \
+  install --frozen-lockfile --ignore-scripts --store-dir "$PWD/.local/phase0-pnpm-store"
+
+node .local/phase0-node-cli/node_modules/pnpm/bin/pnpm.cjs \
+  --dir .local/upstream-switch/console --filter @switch-console/agent-controller... -r run build
+
+node .local/phase0-node-cli/node_modules/pnpm/bin/pnpm.cjs \
+  --dir .local/upstream-switch/console --filter @switch-console/agent-controller run package
+
+node .local/upstream-switch/console/packages/agent-controller/dist-package/package/cli.mjs --version
+```
+
+The shell expands $PWD to the repository root before pnpm changes directory. The final command returned 0.1.1. See OBSERVATIONS.md for the tarball hash and real isolated OpenCode health result.
+
+**Still to run:** enroll through a real one-time Machines code with `--secret-store file` and an ignored data directory, then start `run` in the foreground. Provision the verified owner's separate OpenCode probe identity with explicit provider/model, no full-access bypass, and private working directory. Verify the selected binary/permissions actually used by the host before sending a room mention. Managed agents use the controller's WebSocket relay; use a different unmanaged identity for the SSE probe. No controller has been enrolled and no managed agent/model session has run yet.
+
+
+The user selected OpenCode's built-in backend for the live test. The real isolated provider inventory's default model is `big-pickle`; use the verified adapter syntax `opencode/big-pickle`. Its inventory listing is not evidence that a model request or Switch MCP call has succeeded. Keep this choice in configuration; no API key is needed to inventory the selected backend.

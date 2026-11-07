@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 import shutil
+import secrets
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,6 +45,9 @@ def main():
             "POSTGRES_HOST_PORT": "15432",
             "FRONTEND_BASE_URL": "http://127.0.0.1:13000",
             "TELEMETRY_ENABLED": "false",
+            "FEATURE_FLAGS_ENABLED": "agent_management",
+            "CONTROLLER_TOKEN_SECRET": secrets.token_hex(32),
+            "GATEWAY_PUBLIC_URL": "http://127.0.0.1:18000",
         }
         lines = []
         found = set()
